@@ -40,6 +40,7 @@ const platforms = [
 ];
 
 const rows = [];
+var metricsPayload = [];
 
 function query(after) {
     return github.request({
@@ -93,37 +94,95 @@ function query(after) {
             if (!suite)
                 continue;
 
-            const runs = commit.checkSuites.nodes[0].checkRuns.nodes;
-            const row = [`${commit.oid.slice(0, 7)} - ${commit.messageHeadline}`];
-
-            for (let i = 0; i < platforms.length; i++) {
-                const {platform, arch} = platforms[i];
-
-                const run = runs.find((run) => {
-                    const [, p, a] = run.name.match(/Size - (\w+) ([\w-]+)/);
-                    return platform === p && arch === a;
-                });
-
-                row[i + 1] = run ? +run.summary.match(/is (\d+) bytes/)[1] : undefined;
-            }
-
-            rows.push(row);
+            // Build source data for http://mapbox.github.io/mapbox-gl-native/metrics/binary-size/
+            createChartSourceData(commit);
+            // Build source data for binary size metrics reporting on S3
+            createMetricsPayload(suite);
         }
 
         if (history.pageInfo.hasNextPage) {
             return query(history.pageInfo.endCursor);
         } else {
-            return new AWS.S3({region: 'us-east-1'}).putObject({
-                Body: zlib.gzipSync(JSON.stringify(rows.reverse())),
-                Bucket: 'mapbox',
-                Key: 'mapbox-gl-native/metrics/binary-size/data.json',
-                ACL: 'public-read',
-                CacheControl: 'max-age=300',
-                ContentEncoding: 'gzip',
-                ContentType: 'application/json'
-            }).promise();
+          const date = new Date(); 
+          
+          var params = {
+              Body: JSON.stringify(metricsPayload),
+              Bucket: 'mapbox-loading-dock',
+              Key: `raw/mobile_staging.binarysize/${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-${date.getUTCDate()}/${process.env['CIRCLE_SHA1']}.json`,
+              CacheControl: 'max-age=300',
+              ContentEncoding: 'json',
+              ContentType: 'application/json'
+          };
+          
+          return new AWS.S3({region: 'us-east-1'}).putObject(params, function (err, res) {
+            if (err) {
+              console.log("Error sending publishing metrics: ", err);
+            } else {
+              console.log("Binary size logged to S3 successfully")
+            }
+          });
         }
     });
+}
+
+function createChartSourceData(commit) {
+  const runs = commit.checkSuites.nodes[0].checkRuns.nodes;
+  const row = [`${commit.oid.slice(0, 7)} - ${commit.messageHeadline}`];
+  
+  for (let i = 0; i < platforms.length; i++) {
+      const {platform, arch} = platforms[i];
+
+      const run = runs.find((run) => {
+          const [, p, a] = run.name.match(/Size - (\w+) ([\w-]+)/);
+          return platform === p && arch === a;
+      });
+
+      row[i + 1] = run ? +run.summary.match(/is (\d+) bytes/)[1] : undefined;
+  }
+  rows.push(row);
+}
+
+function createMetricsPayload(suite) {
+  suite["checkRuns"]["nodes"].forEach(function(binaryMeasurement, index) {
+    metricsPayload.push(formatBinaryMetric(binaryMeasurement))
+  });
+}
+
+function formatBinaryMetric(item) {
+  var platform = item["name"].includes("iOS") ? 'iOS' : 'Android';
+  var size = item["title"].replace(/ MB/g,'');
+  var arch;
+
+  switch(true) {
+    case item["name"].includes("arm-v7") || item["name"].includes("armv7"):
+      arch = "arm-v7";
+      break;
+    case item["name"].includes("arm-v8"):
+      arch = "arm-v8";
+      break;
+    case item["name"].includes("x86"):
+      arch = "x86";
+      break;
+    case item["name"].includes("x86_64"):
+      arch = "x86_64";
+      break;
+    case item["name"].includes("AAR"):
+      arch = "AAR";
+      break;
+    case item["name"].includes("arm64"):
+      arch = "arm64";
+      break;
+    case item["name"].includes("Dynamic"):
+      arch = "Dynamic";
+      break;
+  }
+  
+  return {
+      'sdk': 'maps',
+      'platform' : platform,
+      'arch': arch,
+      'size' : size
+  };
 }
 
 github.apps.createInstallationToken({installation_id: SIZE_CHECK_APP_INSTALLATION_ID})

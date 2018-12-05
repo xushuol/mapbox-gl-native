@@ -148,24 +148,18 @@
                         }
                     },
                     {
-                        "PolicyName": "publish-metrics",
-                        "PolicyDocument": {
-                            "Statement": [
-                                {
-                                    "Action": [
-                                        "s3:DeleteObject",
-                                        "s3:GetObject",
-                                        "s3:GetObjectAcl",
-                                        "s3:PutObject",
-                                        "s3:PutObjectAcl"
-                                    ],
-                                    "Effect": "Allow",
-                                    "Resource": [
-                                        "arn:aws:s3:::mapbox/mapbox-gl-native/metrics/*"
-                                    ]
-                                }
-                            ]
-                        }
+                      "PolicyName": "publish-metrics",
+                      "PolicyDocument": {
+                        "Statement": [
+                          {
+                            "Action": ["s3:PutObject"],
+                            "Effect": "Allow",
+                            "Resource": ["arn:aws:s3:::mapbox-loading-dock/raw/mobile.binarysize/*",
+                                       "arn:aws:s3:::mapbox-loading-dock/raw/mobile.codecoverage/*",
+                                       "arn:aws:s3:::mapbox-loading-dock/raw/mobile_staging.binarysize/*"]
+                          }
+                        ]
+                      }
                     },
                     {
                         "PolicyName": "cloudwatch-metrics",
