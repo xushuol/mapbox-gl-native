@@ -25,6 +25,7 @@ const payload = {
     iat: Math.floor(Date.now() / 1000),
     iss: SIZE_CHECK_APP_ID
 };
+const date = new Date();
 
 const token = jwt.sign(payload, key, {algorithm: 'RS256'});
 github.authenticate({type: 'app', token});
@@ -103,8 +104,7 @@ function query(after) {
         if (history.pageInfo.hasNextPage) {
             return query(history.pageInfo.endCursor);
         } else {
-          const date = new Date(); 
-          
+
           var params = {
               Body: JSON.stringify(metricsPayload),
               Bucket: 'mapbox-loading-dock',
@@ -181,7 +181,8 @@ function formatBinaryMetric(item) {
       'sdk': 'maps',
       'platform' : platform,
       'arch': arch,
-      'size' : size
+      'size' : size,
+      'created_at': `${Date.now()}`
   };
 }
 
