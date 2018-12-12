@@ -104,7 +104,7 @@ function query(after) {
         if (history.pageInfo.hasNextPage) {
             return query(history.pageInfo.endCursor);
         } else {
-mapbox-loading-dock/raw/mobile_tmp.binary_size
+
           var params = {
               Body: JSON.stringify(metricsPayload),
               Bucket: 'mapbox-loading-dock',
