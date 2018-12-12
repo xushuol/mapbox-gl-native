@@ -25,7 +25,6 @@ const payload = {
     iat: Math.floor(Date.now() / 1000),
     iss: SIZE_CHECK_APP_ID
 };
-const date = new Date();
 
 const token = jwt.sign(payload, key, {algorithm: 'RS256'});
 github.authenticate({type: 'app', token});
@@ -40,6 +39,7 @@ const platforms = [
     { 'platform': 'Android', 'arch': 'x86_64' }
 ];
 
+const date = new Date();
 const rows = [];
 var metricsPayload = [];
 
@@ -182,7 +182,7 @@ function formatBinaryMetric(item) {
       'platform' : platform,
       'arch': arch,
       'size' : size,
-      'created_at': `${Date.now()}`
+      'created_at': `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-${date.getUTCDate()}`
   };
 }
 
