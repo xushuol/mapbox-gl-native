@@ -104,11 +104,11 @@ function query(after) {
         if (history.pageInfo.hasNextPage) {
             return query(history.pageInfo.endCursor);
         } else {
-
+mapbox-loading-dock/raw/mobile_tmp.binary_size
           var params = {
               Body: JSON.stringify(metricsPayload),
               Bucket: 'mapbox-loading-dock',
-              Key: `raw/mobile_tmp.binary_size/${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-${date.getUTCDate()}/${process.env['CIRCLE_SHA1']}.json`,
+              Key: `raw/mobile_tmp.binary_size/${process.env['CIRCLE_SHA1']}.json`,
               CacheControl: 'max-age=300',
               ContentEncoding: 'json',
               ContentType: 'application/json'
