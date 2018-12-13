@@ -87,6 +87,9 @@ function query(after) {
             }`
     }).then((result) => {
         const history = result.data.data.repository.ref.target.history;
+        console.log("---------Dumping history-------");
+        console.log(history)
+        console.log("-------------------------------");
         const lastCommitSizeChecks = history.edges[0].node.checkSuites.nodes[0].checkRuns.nodes;
 
         for (const edge of history.edges) {
