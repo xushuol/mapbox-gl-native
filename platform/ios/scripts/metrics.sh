@@ -18,5 +18,7 @@ scripts/check_binary_size.js "build/ios/pkg/dynamic/Mapbox-stripped-x86_64"  "iO
 # Track overall library size
 scripts/check_binary_size.js "build/ios/pkg/dynamic/Mapbox-stripped"         "iOS Dynamic"
 
-# Log binary sizes to S3
+# Build source data for http://mapbox.github.io/mapbox-gl-native/metrics/binary-size/
 scripts/publish_binary_size.js
+# Log binary sizes to S3
+scripts/log_binary_metrics.js

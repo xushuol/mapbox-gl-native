@@ -12,5 +12,7 @@ scripts/check_binary_size.js "platform/android/MapboxGLAndroidSDK/build/intermed
 # Track overall library size
 scripts/check_binary_size.js "platform/android/MapboxGLAndroidSDK/build/outputs/aar/MapboxGLAndroidSDK-release.aar" "Android AAR"
 
-# Log binary sizes to S3
+# Build source data for http://mapbox.github.io/mapbox-gl-native/metrics/binary-size/
 scripts/publish_binary_size.js
+# Log binary sizes to S3
+scripts/log_binary_metrics.js
