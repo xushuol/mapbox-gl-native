@@ -87,6 +87,7 @@ function query(after) {
             }`
     }).then((result) => {
         const history = result.data.data.repository.ref.target.history;
+        const lastCommitSizeChecks = history.edges[0].node.checkSuites.nodes[0].checkRuns.nodes;
 
         for (const edge of history.edges) {
             const commit = edge.node;
@@ -105,7 +106,6 @@ function query(after) {
           
           // Send result of binary size checks of last commit to S3
           const binaryMetrics = [];
-          const lastCommitSizeChecks = history.edges[0].node.checkSuites.nodes[0].checkRuns.nodes;
           
           lastCommitSizeChecks.forEach(function(binarySize) {
             binaryMetrics.push(JSON.stringify(formatBinaryMetric(binarySize)))
