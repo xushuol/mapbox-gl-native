@@ -97,20 +97,28 @@ function query(after) {
 
             // Build source data for http://mapbox.github.io/mapbox-gl-native/metrics/binary-size/
             createChartSourceData(commit);
-            // Build source data for binary size metrics reporting on S3
-            createMetricsPayload(suite);
         }
 
         if (history.pageInfo.hasNextPage) {
             return query(history.pageInfo.endCursor);
         } else {
+          
+          // Send result of binary size checks of last commit to S3
+          const binaryMetrics = [];
+          const lastCommitSizeChecks = history.edges[0].node.checkSuites.nodes[0].checkRuns.nodes;
+          
+          lastCommitSizeChecks.forEach(function(binarySize) {
+            binaryMetrics.push(JSON.stringify(formatBinaryMetric(binarySize)))
+          });
+
+          var payload = binaryMetrics.join("\n")
 
           var params = {
-              Body: JSON.stringify(metricsPayload),
+              Body: zlib.gzipSync(binaryMetrics),
               Bucket: 'mapbox-loading-dock',
               Key: `raw/mobile_tmp.binary_size/${process.env['CIRCLE_SHA1']}.json`,
               CacheControl: 'max-age=300',
-              ContentEncoding: 'json',
+              ContentEncoding: 'gzip',
               ContentType: 'application/json'
           };
           
@@ -142,16 +150,10 @@ function createChartSourceData(commit) {
   rows.push(row);
 }
 
-function createMetricsPayload(suite) {
-  suite["checkRuns"]["nodes"].forEach(function(binaryMeasurement, index) {
-    metricsPayload.push(formatBinaryMetric(binaryMeasurement))
-  });
-}
-
 function formatBinaryMetric(item) {
   var platform = item["name"].includes("iOS") ? 'iOS' : 'Android';
-  var size = item["title"].replace(/ MB/g,'');
   var arch;
+  var size = item["title"].replace(/ MB/g,'');
 
   switch(true) {
     case item["name"].includes("arm-v7") || item["name"].includes("armv7"):
@@ -182,6 +184,7 @@ function formatBinaryMetric(item) {
       'platform' : platform,
       'arch': arch,
       'size' : size,
+      'commit': `${process.env['CIRCLE_SHA1']}`,
       'created_at': `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-${date.getUTCDate()}`
   };
 }
