@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const fs = require('fs');
 const zlib = require('zlib');
 const AWS = require('aws-sdk');
