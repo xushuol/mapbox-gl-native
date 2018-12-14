@@ -44,11 +44,11 @@ const binaryMetricsPayload = binaries.map(binary => {
 });
 
 var params = {
-    Body: zlib.gzipSync(binaryMetricsPayload.join('\n')),
+    Body: binaryMetricsPayload.join('\n'),
     Bucket: 'mapbox-loading-dock',
     Key: `raw/mobile_tmp.binary_size/${process.env['CIRCLE_SHA1']}.json`,
     CacheControl: 'max-age=300',
-    ContentEncoding: 'gzip',
+    ContentEncoding: 'utf8',
     ContentType: 'application/json'
 };
 
