@@ -11,11 +11,11 @@
 #include <mbgl/programs/symbol_program.hpp>
 
 #define MBGL_DEFINE_GET_LAYER_PROGRAMS(ProgramsType, property)                 \
-ProgramsType& Programs::get##ProgramsType() {                                  \
+ProgramsType& Programs::get##ProgramsType() noexcept {                         \
     if (!property) {                                                           \
         property = std::make_unique<ProgramsType>(context, programParameters); \
     }                                                                          \
-    return static_cast<ProgramsType&>(*property);                                                          \
+    return static_cast<ProgramsType&>(*property);                              \
 }
 
 namespace mbgl {

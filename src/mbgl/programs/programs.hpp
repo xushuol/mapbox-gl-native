@@ -23,15 +23,15 @@ public:
     Programs(gl::Context&, const ProgramParameters&);
     ~Programs();
 
-    BackgroundLayerPrograms& getBackgroundLayerPrograms();
-    RasterLayerPrograms& getRasterLayerPrograms();
-    HeatmapLayerPrograms& getHeatmapLayerPrograms();
-    CircleLayerPrograms& getCircleLayerPrograms();
-    HillshadeLayerPrograms& getHillshadeLayerPrograms();
-    FillLayerPrograms& getFillLayerPrograms();
-    FillExtrusionLayerPrograms& getFillExtrusionLayerPrograms();
-    LineLayerPrograms& getLineLayerPrograms();
-    SymbolLayerPrograms& getSymbolLayerPrograms();
+    BackgroundLayerPrograms& getBackgroundLayerPrograms() noexcept;
+    RasterLayerPrograms& getRasterLayerPrograms() noexcept;
+    HeatmapLayerPrograms& getHeatmapLayerPrograms() noexcept;
+    CircleLayerPrograms& getCircleLayerPrograms() noexcept;
+    HillshadeLayerPrograms& getHillshadeLayerPrograms() noexcept;
+    FillLayerPrograms& getFillLayerPrograms() noexcept;
+    FillExtrusionLayerPrograms& getFillExtrusionLayerPrograms() noexcept;
+    LineLayerPrograms& getLineLayerPrograms() noexcept;
+    SymbolLayerPrograms& getSymbolLayerPrograms() noexcept;
 
     DebugProgram debug;
     ClippingMaskProgram clippingMask;
