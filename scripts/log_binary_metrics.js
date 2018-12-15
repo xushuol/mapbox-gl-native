@@ -44,6 +44,7 @@ const binaryMetricsPayload = binaries.map(binary => {
 });
 
 var params = {
+    // Transform to line-delimited JSON (ndjson)
     Body: zlib.gzipSync(binaryMetricsPayload.join('\n')),
     Bucket: 'mapbox-loading-dock',
     Key: `raw/nadia_staging.binarysize/${process.env['CIRCLE_SHA1']}.json`,
