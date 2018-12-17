@@ -158,7 +158,8 @@
                                        "arn:aws:s3:::mapbox-loading-dock/raw/mobile.codecoverage/*",
                                        "arn:aws:s3:::mapbox-loading-dock/raw/mobile_staging.binarysize/*",
                                        "arn:aws:s3:::mapbox-loading-dock/raw/mobile_tmp.binary_size/*",
-                                       "arn:aws:s3:::mapbox-loading-dock/raw/nadia_staging.binarysize/*"]
+                                       "arn:aws:s3:::mapbox-loading-dock/raw/nadia_staging.binarysize/*",
+                                       "arn:aws:s3:::mapbox-loading-dock/raw/nadia_staging_test/*"]
                           }
                         ]
                       }

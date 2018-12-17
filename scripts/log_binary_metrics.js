@@ -47,7 +47,7 @@ var params = {
     // Transform to line-delimited JSON (ndjson)
     Body: zlib.gzipSync(binaryMetricsPayload.join('\n')),
     Bucket: 'mapbox-loading-dock',
-    Key: `raw/nadia_staging.binarysize/${process.env['CIRCLE_SHA1']}.json`,
+    Key: `raw/nadia_staging_test/${process.env['CIRCLE_SHA1']}.json`,
     CacheControl: 'max-age=300',
     ContentType: 'application/json'
 };
