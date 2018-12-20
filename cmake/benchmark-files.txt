@@ -6,7 +6,6 @@ benchmark/api/render.benchmark.cpp
 
 # benchmark
 benchmark/include/mbgl/benchmark.hpp
-benchmark/src/main.cpp
 benchmark/src/mbgl/benchmark/benchmark.cpp
 benchmark/src/mbgl/benchmark/stub_geometry_tile_feature.hpp
 
