@@ -10,6 +10,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <mbgl/util/geojson.hpp>
 
 #include "map_renderer.hpp"
 
@@ -43,7 +44,8 @@ public:
     std::vector<Feature> querySourceFeatures(const std::string& sourceID, const SourceQueryOptions&) const;
     AnnotationIDs queryPointAnnotations(const ScreenBox& box) const;
     AnnotationIDs queryShapeAnnotations(const ScreenBox& box) const;
-
+    FeatureExtensionValue queryFeatureExtensions(const std::string&, const Feature&, const std::string&,
+                                                 const std::string&, const optional<std::map<std::string, Value>>&) const;
     // Memory
     void reduceMemoryUse();
 

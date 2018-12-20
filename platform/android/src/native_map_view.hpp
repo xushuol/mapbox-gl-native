@@ -207,6 +207,9 @@ public:
                                                                  jni::jfloat, const jni::Array<jni::String>&,
                                                                  const jni::Array<jni::Object<>>& jfilter);
 
+
+    void queryFeatureExtensions(JNIEnv&, const jni::String, const jni::Object<geojson::Feature>, const jni::String, const jni::String);
+
     jni::Local<jni::Object<Light>> getLight(JNIEnv&);
 
     jni::Local<jni::Array<jni::Object<Layer>>> getLayers(JNIEnv&);

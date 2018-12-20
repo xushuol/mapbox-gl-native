@@ -780,6 +780,17 @@ jni::Local<jni::Array<jni::Object<geojson::Feature>>> NativeMapView::queryRender
             rendererFrontend->queryRenderedFeatures(box, { layers, toFilter(env, jfilter) }));
 }
 
+void NativeMapView::queryFeatureExtensions(JNIEnv& env, const jni::String sourceId, const jni::Object<geojson::Feature> feature, const jni::String extension, const jni::String extensionField) {
+    using namespace mbgl::android::conversion;
+    using namespace mbgl::android::geojson;
+
+    std::string _sourceId = jni::Make<std::string>(env, sourceId);
+    std::string _extension = jni::Make<std::string>(env, extension);
+    std::string _extensionField = jni::Make<std::string>(env, extensionField);
+    auto _feature = Feature::convert(env,feature);
+    auto result = rendererFrontend->queryFeatureExtensions(_sourceId, _feature, _extension, _extensionField, {});
+}
+
 jni::Local<jni::Object<Light>> NativeMapView::getLight(JNIEnv& env) {
     mbgl::style::Light* light = map->getStyle().getLight();
     if (light) {

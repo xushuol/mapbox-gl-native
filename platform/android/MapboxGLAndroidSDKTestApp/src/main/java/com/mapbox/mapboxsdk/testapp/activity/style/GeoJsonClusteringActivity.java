@@ -1,10 +1,13 @@
 package com.mapbox.mapboxsdk.testapp.activity.style;
 
 import android.graphics.Color;
+import android.graphics.PointF;
 import android.os.Bundle;
 import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
+
+import com.mapbox.geojson.Feature;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.maps.MapView;
@@ -21,6 +24,8 @@ import timber.log.Timber;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
+import java.util.Objects;
 
 import static com.mapbox.mapboxsdk.style.expressions.Expression.all;
 import static com.mapbox.mapboxsdk.style.expressions.Expression.division;
@@ -66,21 +71,48 @@ public class GeoJsonClusteringActivity extends AppCompatActivity {
 
     mapView.getMapAsync(map -> {
       mapboxMap = map;
+
       mapboxMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(37.7749, 122.4194), 0));
 
-      mapboxMap.setStyle(Style.MAPBOX_STREETS, new Style.OnStyleLoaded() {
-        @Override
-        public void onStyleLoaded(Style style) {
-          style.addImage(
-            "icon-id",
-            BitmapUtils.getBitmapFromDrawable(getResources().getDrawable(R.drawable.ic_hearing_black_24dp)),
-            true
-          );
-          // Add a clustered source with some layers
-          addClusteredGeoJsonSource(style);
-        }
+      mapboxMap.setStyle(Style.MAPBOX_STREETS, style -> {
+        style.addImage(
+          "icon-id",
+          Objects.requireNonNull(BitmapUtils.getBitmapFromDrawable(getResources().getDrawable(R.drawable.ic_hearing_black_24dp))),
+          true
+        );
+        // Add a clustered source with some layers
+        addClusteredGeoJsonSource(style);
       });
     });
+  }
+
+  private void moveCameraToClusterExpansion(Feature feature, LatLng latLng) {
+//    if (feature.hasProperty("cluster") && feature.getBooleanProperty("cluster")) {
+//      double newZoom = source.getClusterExpansionZoom((long) feature.getNumberProperty("cluster_id"));
+//      mapboxMap.animateCamera(
+//        CameraUpdateFactory.newLatLngZoom(latLng, newZoom + 0.01), 750
+//      );
+//    }
+
+
+  }
+
+  private void recursiveLoopClusterFeatures(List<Feature> features) {
+//    for (Feature feature : features) {
+//      boolean cluster = feature.hasProperty("cluster") && feature.getBooleanProperty("cluster");
+//      if (cluster) {
+//        long pointCount = (long) feature.getNumberProperty("point_count");
+//        long clusterId = (long) feature.getNumberProperty("cluster_id");
+//        double expansionZoom = source.getClusterExpansionZoom(clusterId);
+//        Timber.e(
+//          "Cluster= (id=%s) with %s points, cluster will expand at zoom %s",
+//          clusterId, pointCount, expansionZoom
+//        );
+//        recursiveLoopClusterFeatures(source.getClusterLeaves(clusterId, 10, 0));
+//      } else {
+//        Timber.e("Point data: %s", feature.toJson());
+//      }
+//    }
   }
 
   @Override
@@ -177,10 +209,11 @@ public class GeoJsonClusteringActivity extends AppCompatActivity {
     );
     unclustered.setFilter(has("mag"));
     style.addLayer(unclustered);
-
+    String[] layerIds = new String[layers.length];
     for (int i = 0; i < layers.length; i++) {
       // Add some nice circles
-      CircleLayer circles = new CircleLayer("cluster-" + i, "earthquakes");
+      layerIds[i] = "cluster-" + i;
+      CircleLayer circles = new CircleLayer(layerIds[i], "earthquakes");
       circles.setProperties(
         circleColor(layers[i][1]),
         circleRadius(18f)
@@ -210,6 +243,14 @@ public class GeoJsonClusteringActivity extends AppCompatActivity {
     );
     style.addLayer(count);
 
+//    mapboxMap.addOnMapClickListener(latLng -> {
+//      PointF point = mapboxMap.getProjection().toScreenLocation(latLng);
+//      List<Feature> features = mapboxMap.queryRenderedFeatures(point, layerIds);
+//      if (!features.isEmpty()) {
+//        moveCameraToClusterExpansion(features.get(0), latLng);
+//        recursiveLoopClusterFeatures(features);
+//      }
+//    });
 
     // Zoom out to start
     mapboxMap.animateCamera(CameraUpdateFactory.zoomTo(1));
