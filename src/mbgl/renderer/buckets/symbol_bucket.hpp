@@ -40,7 +40,7 @@ public:
 class SymbolBucket : public Bucket {
 public:
     SymbolBucket(style::SymbolLayoutProperties::PossiblyEvaluated,
-                 const std::map<std::string, std::pair<style::IconPaintProperties::PossiblyEvaluated, style::TextPaintProperties::PossiblyEvaluated>>&,
+                 std::map<std::string, std::pair<style::IconPaintProperties::PossiblyEvaluated, style::TextPaintProperties::PossiblyEvaluated>>,
                  const style::PropertyValue<float>& textSize,
                  const style::PropertyValue<float>& iconSize,
                  float zoom,
@@ -75,6 +75,10 @@ public:
     bool sortUploaded = false;
 
     std::vector<SymbolInstance> symbolInstances;
+
+    std::map<std::string, std::pair<
+            style::IconPaintProperties::PossiblyEvaluated,
+            style::TextPaintProperties::PossiblyEvaluated>> paintProperties;
 
     std::map<std::string, std::pair<
         SymbolIconProgram::PaintPropertyBinders,

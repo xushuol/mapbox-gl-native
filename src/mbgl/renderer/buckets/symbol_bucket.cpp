@@ -9,9 +9,9 @@ namespace mbgl {
 using namespace style;
 
 SymbolBucket::SymbolBucket(style::SymbolLayoutProperties::PossiblyEvaluated layout_,
-                           const std::map<std::string, std::pair<
+                           std::map<std::string, std::pair<
                                style::IconPaintProperties::PossiblyEvaluated,
-                               style::TextPaintProperties::PossiblyEvaluated>>& layerPaintProperties,
+                               style::TextPaintProperties::PossiblyEvaluated>> layerPaintProperties,
                            const style::PropertyValue<float>& textSize,
                            const style::PropertyValue<float>& iconSize,
                            float zoom,
@@ -27,10 +27,11 @@ SymbolBucket::SymbolBucket(style::SymbolLayoutProperties::PossiblyEvaluated layo
       sortFeaturesByY(sortFeaturesByY_),
       bucketLeaderID(std::move(bucketName_)),
       symbolInstances(std::move(symbolInstances_)),
+      paintProperties(std::move(layerPaintProperties)),
       textSizeBinder(SymbolSizeBinder::create(zoom, textSize, TextSize::defaultValue())),
       iconSizeBinder(SymbolSizeBinder::create(zoom, iconSize, IconSize::defaultValue())) {
 
-    for (const auto& pair : layerPaintProperties) {
+    for (const auto& pair : paintProperties) {
         paintPropertyBinders.emplace(
             std::piecewise_construct,
             std::forward_as_tuple(pair.first),

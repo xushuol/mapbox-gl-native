@@ -153,7 +153,7 @@ void RenderSymbolLayer::render(PaintParameters& parameters, RenderSource*) {
 
         if (bucket.hasIconData()) {
             auto values = iconPropertyValues(layout);
-            auto paintPropertyValues = iconPaintProperties();
+            const auto& paintPropertyValues = bucket.paintProperties.at(getID()).first;
 
             const bool alongLine = layout.get<SymbolPlacement>() != SymbolPlacementType::Point &&
                 layout.get<IconRotationAlignment>() == AlignmentType::Map;
@@ -214,7 +214,7 @@ void RenderSymbolLayer::render(PaintParameters& parameters, RenderSource*) {
             parameters.context.bindTexture(*geometryTile.glyphAtlasTexture, 0, gl::TextureFilter::Linear);
 
             auto values = textPropertyValues(layout);
-            auto paintPropertyValues = textPaintProperties();
+            const auto& paintPropertyValues = bucket.paintProperties.at(getID()).second;
 
             const bool alongLine = layout.get<SymbolPlacement>() != SymbolPlacementType::Point &&
                 layout.get<TextRotationAlignment>() == AlignmentType::Map;
