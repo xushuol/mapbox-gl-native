@@ -32,6 +32,8 @@ import com.mapbox.mapboxsdk.maps.MapboxMap.OnMapClickListener;
 import com.mapbox.mapboxsdk.maps.Style;
 
 import java.lang.ref.WeakReference;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
@@ -993,12 +995,15 @@ public final class LocationComponent {
     locationCameraController = new LocationCameraController(
       context, mapboxMap, cameraTrackingChangedListener, options, onCameraMoveInvalidateListener);
 
+    Set<AnimatorListenerHolder> animationsValueChangeListeners = new HashSet<>();
+    animationsValueChangeListeners.addAll(locationLayerController.getAnimationListeners());
+    animationsValueChangeListeners.addAll(locationCameraController.getAnimationListeners());
+
     locationAnimatorCoordinator = new LocationAnimatorCoordinator(
       mapboxMap.getProjection(),
-      MapboxAnimatorSetProvider.getInstance()
+      MapboxAnimatorSetProvider.getInstance(),
+      animationsValueChangeListeners
     );
-    locationAnimatorCoordinator.addLayerListener(locationLayerController);
-    locationAnimatorCoordinator.addCameraListener(locationCameraController);
     locationAnimatorCoordinator.setTrackingAnimationDurationMultiplier(options
       .trackingAnimationDurationMultiplier());
 

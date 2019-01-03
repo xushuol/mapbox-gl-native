@@ -18,7 +18,10 @@ import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.location.modes.CameraMode;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 
-final class LocationCameraController implements MapboxAnimator.OnCameraAnimationsValuesChangeListener {
+import java.util.HashSet;
+import java.util.Set;
+
+final class LocationCameraController {
 
   @CameraMode.Mode
   private int cameraMode;
@@ -192,44 +195,71 @@ final class LocationCameraController implements MapboxAnimator.OnCameraAnimation
     onCameraMoveInvalidateListener.onInvalidateCameraMove();
   }
 
-  @Override
-  public void onNewLatLngValue(@NonNull LatLng latLng) {
-    if (cameraMode == CameraMode.TRACKING
-      || cameraMode == CameraMode.TRACKING_COMPASS
-      || cameraMode == CameraMode.TRACKING_GPS
-      || cameraMode == CameraMode.TRACKING_GPS_NORTH) {
-      setLatLng(latLng);
-    }
-  }
+  private final MapboxAnimator.AnimationsValueChangeListener<LatLng> latLngValueListener =
+    new MapboxAnimator.AnimationsValueChangeListener<LatLng>() {
+      @Override
+      public void onNewAnimationValue(LatLng value) {
+        if (cameraMode == CameraMode.TRACKING
+          || cameraMode == CameraMode.TRACKING_COMPASS
+          || cameraMode == CameraMode.TRACKING_GPS
+          || cameraMode == CameraMode.TRACKING_GPS_NORTH) {
+          setLatLng(value);
+        }
+      }
+    };
 
-  @Override
-  public void onNewGpsBearingValue(float gpsBearing) {
-    boolean trackingNorth = cameraMode == CameraMode.TRACKING_GPS_NORTH
-      && mapboxMap.getCameraPosition().bearing != 0;
+  private final MapboxAnimator.AnimationsValueChangeListener<Float> gpsBearingValueListener =
+    new MapboxAnimator.AnimationsValueChangeListener<Float>() {
+      @Override
+      public void onNewAnimationValue(Float value) {
+        boolean trackingNorth = cameraMode == CameraMode.TRACKING_GPS_NORTH
+          && mapboxMap.getCameraPosition().bearing != 0;
 
-    if (cameraMode == CameraMode.TRACKING_GPS
-      || cameraMode == CameraMode.NONE_GPS
-      || trackingNorth) {
-      setBearing(gpsBearing);
-    }
-  }
+        if (cameraMode == CameraMode.TRACKING_GPS
+          || cameraMode == CameraMode.NONE_GPS
+          || trackingNorth) {
+          setBearing(value);
+        }
+      }
+    };
 
-  @Override
-  public void onNewCompassBearingValue(float compassBearing) {
-    if (cameraMode == CameraMode.TRACKING_COMPASS
-      || cameraMode == CameraMode.NONE_COMPASS) {
-      setBearing(compassBearing);
-    }
-  }
+  private final MapboxAnimator.AnimationsValueChangeListener<Float> compassBearingValueListener =
+    new MapboxAnimator.AnimationsValueChangeListener<Float>() {
+      @Override
+      public void onNewAnimationValue(Float value) {
+        if (cameraMode == CameraMode.TRACKING_COMPASS
+          || cameraMode == CameraMode.NONE_COMPASS) {
+          setBearing(value);
+        }
+      }
+    };
 
-  @Override
-  public void onNewZoomValue(float zoom) {
-    setZoom(zoom);
-  }
+  private final MapboxAnimator.AnimationsValueChangeListener<Float> zoomValueListener =
+    new MapboxAnimator.AnimationsValueChangeListener<Float>() {
+      @Override
+      public void onNewAnimationValue(Float value) {
+        setZoom(value);
+      }
+    };
 
-  @Override
-  public void onNewTiltValue(float tilt) {
-    setTilt(tilt);
+  private final MapboxAnimator.AnimationsValueChangeListener<Float> tiltValueListener =
+    new MapboxAnimator.AnimationsValueChangeListener<Float>() {
+      @Override
+      public void onNewAnimationValue(Float value) {
+        setTilt(value);
+      }
+    };
+
+  Set<AnimatorListenerHolder> getAnimationListeners() {
+    Set<AnimatorListenerHolder> holders = new HashSet<>();
+    holders.add(new AnimatorListenerHolder(MapboxAnimator.ANIMATOR_CAMERA_LATLNG, latLngValueListener));
+    holders.add(new AnimatorListenerHolder(MapboxAnimator.ANIMATOR_CAMERA_GPS_BEARING, gpsBearingValueListener));
+    holders.add(new AnimatorListenerHolder(
+      MapboxAnimator.ANIMATOR_CAMERA_COMPASS_BEARING,
+      compassBearingValueListener));
+    holders.add(new AnimatorListenerHolder(MapboxAnimator.ANIMATOR_ZOOM, zoomValueListener));
+    holders.add(new AnimatorListenerHolder(MapboxAnimator.ANIMATOR_TILT, tiltValueListener));
+    return holders;
   }
 
   boolean isTransitioning() {

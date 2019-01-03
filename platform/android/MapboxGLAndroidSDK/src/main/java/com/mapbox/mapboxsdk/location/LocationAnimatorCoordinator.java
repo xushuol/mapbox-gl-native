@@ -16,6 +16,7 @@ import com.mapbox.mapboxsdk.maps.Projection;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static com.mapbox.mapboxsdk.location.LocationComponentConstants.ACCURACY_RADIUS_ANIMATION_DURATION;
 import static com.mapbox.mapboxsdk.location.LocationComponentConstants.COMPASS_UPDATE_RATE_MS;
@@ -36,9 +37,6 @@ final class LocationAnimatorCoordinator {
 
   final SparseArray<MapboxAnimator> animatorArray = new SparseArray<>();
 
-  final List<MapboxAnimator.OnLayerAnimationsValuesChangeListener> layerListeners = new ArrayList<>();
-  final List<MapboxAnimator.OnCameraAnimationsValuesChangeListener> cameraListeners = new ArrayList<>();
-
   private final Projection projection;
   private Location previousLocation;
   private float previousAccuracyRadius = -1;
@@ -49,25 +47,24 @@ final class LocationAnimatorCoordinator {
   private boolean compassAnimationEnabled;
   private boolean accuracyAnimationEnabled;
 
-  LocationAnimatorCoordinator(@NonNull Projection projection, @NonNull MapboxAnimatorSetProvider animatorSetProvider) {
+  private final MapboxAnimator.AnimationsValueChangeListener[] listeners;
+
+  LocationAnimatorCoordinator(@NonNull Projection projection, @NonNull MapboxAnimatorSetProvider animatorSetProvider,
+                              @NonNull Set<AnimatorListenerHolder> listenerHolders) {
     this.projection = projection;
     this.animatorSetProvider = animatorSetProvider;
-  }
 
-  void addLayerListener(MapboxAnimator.OnLayerAnimationsValuesChangeListener listener) {
-    layerListeners.add(listener);
-  }
+    int maxIndex = 0;
+    for (AnimatorListenerHolder holder : listenerHolders) {
+      if (holder.getAnimatorType() > maxIndex) {
+        maxIndex = holder.getAnimatorType();
+      }
+    }
 
-  void removeLayerListener(MapboxAnimator.OnLayerAnimationsValuesChangeListener listener) {
-    layerListeners.remove(listener);
-  }
-
-  void addCameraListener(MapboxAnimator.OnCameraAnimationsValuesChangeListener listener) {
-    cameraListeners.add(listener);
-  }
-
-  void removeCameraListener(MapboxAnimator.OnCameraAnimationsValuesChangeListener listener) {
-    cameraListeners.remove(listener);
+    listeners = new MapboxAnimator.AnimationsValueChangeListener[maxIndex + 1];
+    for (AnimatorListenerHolder holder : listenerHolders) {
+      listeners[holder.getAnimatorType()] = holder.getListener();
+    }
   }
 
   void feedNewLocation(@NonNull Location newLocation, @NonNull CameraPosition currentCameraPosition,
@@ -147,7 +144,7 @@ final class LocationAnimatorCoordinator {
   }
 
   private float getPreviousLayerGpsBearing() {
-    LayerGpsBearingAnimator animator = (LayerGpsBearingAnimator) animatorArray.get(ANIMATOR_LAYER_GPS_BEARING);
+    MapboxFloatAnimator animator = (MapboxFloatAnimator) animatorArray.get(ANIMATOR_LAYER_GPS_BEARING);
     float previousBearing;
     if (animator != null) {
       previousBearing = (float) animator.getAnimatedValue();
@@ -158,8 +155,7 @@ final class LocationAnimatorCoordinator {
   }
 
   private float getPreviousLayerCompassBearing() {
-    LayerCompassBearingAnimator animator =
-      (LayerCompassBearingAnimator) animatorArray.get(ANIMATOR_LAYER_COMPASS_BEARING);
+    MapboxFloatAnimator animator = (MapboxFloatAnimator) animatorArray.get(ANIMATOR_LAYER_COMPASS_BEARING);
 
     float previousBearing;
     if (animator != null) {
@@ -171,7 +167,7 @@ final class LocationAnimatorCoordinator {
   }
 
   private float getPreviousAccuracyRadius() {
-    LayerAccuracyAnimator animator = (LayerAccuracyAnimator) animatorArray.get(ANIMATOR_LAYER_ACCURACY);
+    MapboxAnimator animator = animatorArray.get(ANIMATOR_LAYER_ACCURACY);
     float previousRadius;
     if (animator != null) {
       previousRadius = (float) animator.getAnimatedValue();
@@ -183,49 +179,50 @@ final class LocationAnimatorCoordinator {
 
   private void updateLayerAnimators(LatLng previousLatLng, LatLng targetLatLng,
                                     float previousBearing, float targetBearing) {
-    createNewAnimator(ANIMATOR_LAYER_LATLNG, new LayerLatLngAnimator(previousLatLng, targetLatLng, layerListeners));
+    createNewAnimator(ANIMATOR_LAYER_LATLNG,
+      new MapboxLatLngAnimator(previousLatLng, targetLatLng, listeners[ANIMATOR_LAYER_LATLNG]));
 
     float normalizedLayerBearing = Utils.shortestRotation(targetBearing, previousBearing);
     createNewAnimator(ANIMATOR_LAYER_GPS_BEARING,
-      new LayerGpsBearingAnimator(previousBearing, normalizedLayerBearing, layerListeners));
+      new MapboxFloatAnimator(previousBearing, normalizedLayerBearing, listeners[ANIMATOR_LAYER_GPS_BEARING]));
   }
 
   private void updateCameraAnimators(LatLng previousCameraLatLng, float previousCameraBearing,
                                      LatLng targetLatLng, float targetBearing) {
     createNewAnimator(ANIMATOR_CAMERA_LATLNG,
-      new CameraLatLngAnimator(previousCameraLatLng, targetLatLng, cameraListeners));
+      new MapboxLatLngAnimator(previousCameraLatLng, targetLatLng, listeners[ANIMATOR_CAMERA_LATLNG]));
 
     float normalizedCameraBearing = Utils.shortestRotation(targetBearing, previousCameraBearing);
     createNewAnimator(ANIMATOR_CAMERA_GPS_BEARING,
-      new CameraGpsBearingAnimator(previousCameraBearing, normalizedCameraBearing, cameraListeners));
+      new MapboxFloatAnimator(previousCameraBearing, normalizedCameraBearing, listeners[ANIMATOR_CAMERA_GPS_BEARING]));
   }
 
   private void updateCompassAnimators(float targetCompassBearing, float previousLayerBearing,
                                       float previousCameraBearing) {
     float normalizedLayerBearing = Utils.shortestRotation(targetCompassBearing, previousLayerBearing);
     createNewAnimator(ANIMATOR_LAYER_COMPASS_BEARING,
-      new LayerCompassBearingAnimator(previousLayerBearing, normalizedLayerBearing, layerListeners));
+      new MapboxFloatAnimator(previousLayerBearing, normalizedLayerBearing, listeners[ANIMATOR_LAYER_COMPASS_BEARING]));
 
     float normalizedCameraBearing = Utils.shortestRotation(targetCompassBearing, previousCameraBearing);
     createNewAnimator(ANIMATOR_CAMERA_COMPASS_BEARING,
-      new CameraCompassBearingAnimator(previousCameraBearing, normalizedCameraBearing, cameraListeners));
+      new MapboxFloatAnimator(previousCameraBearing, normalizedCameraBearing, listeners[ANIMATOR_CAMERA_COMPASS_BEARING]));
   }
 
   private void updateAccuracyAnimators(float targetAccuracyRadius, float previousAccuracyRadius) {
     createNewAnimator(ANIMATOR_LAYER_ACCURACY,
-      new LayerAccuracyAnimator(previousAccuracyRadius, targetAccuracyRadius, layerListeners));
+      new MapboxFloatAnimator(previousAccuracyRadius, targetAccuracyRadius, listeners[ANIMATOR_LAYER_ACCURACY]));
   }
 
   private void updateZoomAnimator(float targetZoomLevel, float previousZoomLevel,
                                   @Nullable MapboxMap.CancelableCallback cancelableCallback) {
     createNewAnimator(ANIMATOR_ZOOM,
-      new ZoomAnimator(previousZoomLevel, targetZoomLevel, cameraListeners, cancelableCallback));
+      new MapboxCameraAnimatorAdapter(previousZoomLevel, targetZoomLevel, listeners[ANIMATOR_ZOOM], cancelableCallback));
   }
 
   private void updateTiltAnimator(float targetTilt, float previousTiltLevel,
                                   @Nullable MapboxMap.CancelableCallback cancelableCallback) {
     createNewAnimator(ANIMATOR_TILT,
-      new TiltAnimator(previousTiltLevel, targetTilt, cameraListeners, cancelableCallback));
+      new MapboxCameraAnimatorAdapter(previousTiltLevel, targetTilt, listeners[ANIMATOR_TILT], cancelableCallback));
   }
 
   private long getAnimationDuration() {
@@ -305,7 +302,7 @@ final class LocationAnimatorCoordinator {
   }
 
   private boolean resetCameraLatLngAnimation(@NonNull CameraPosition currentCameraPosition) {
-    CameraLatLngAnimator animator = (CameraLatLngAnimator) animatorArray.get(ANIMATOR_CAMERA_LATLNG);
+    MapboxLatLngAnimator animator = (MapboxLatLngAnimator) animatorArray.get(ANIMATOR_CAMERA_LATLNG);
     if (animator == null) {
       return false;
     }
@@ -313,13 +310,13 @@ final class LocationAnimatorCoordinator {
     LatLng currentTarget = animator.getTarget();
     LatLng previousCameraTarget = currentCameraPosition.target;
     createNewAnimator(ANIMATOR_CAMERA_LATLNG,
-      new CameraLatLngAnimator(previousCameraTarget, currentTarget, cameraListeners));
+      new MapboxLatLngAnimator(previousCameraTarget, currentTarget, listeners[ANIMATOR_CAMERA_LATLNG]));
 
     return immediateAnimation(projection, previousCameraTarget, currentTarget);
   }
 
   private void resetCameraGpsBearingAnimation(@NonNull CameraPosition currentCameraPosition, boolean isGpsNorth) {
-    CameraGpsBearingAnimator animator = (CameraGpsBearingAnimator) animatorArray.get(ANIMATOR_CAMERA_GPS_BEARING);
+    MapboxFloatAnimator animator = (MapboxFloatAnimator) animatorArray.get(ANIMATOR_CAMERA_GPS_BEARING);
     if (animator == null) {
       return;
     }
@@ -329,12 +326,12 @@ final class LocationAnimatorCoordinator {
     float previousCameraBearing = (float) currentCameraPosition.bearing;
     float normalizedCameraBearing = Utils.shortestRotation(currentTargetBearing, previousCameraBearing);
     createNewAnimator(ANIMATOR_CAMERA_GPS_BEARING,
-      new CameraGpsBearingAnimator(previousCameraBearing, normalizedCameraBearing, cameraListeners));
+      new MapboxFloatAnimator(previousCameraBearing, normalizedCameraBearing, listeners[ANIMATOR_CAMERA_GPS_BEARING]));
   }
 
   private void resetCameraCompassAnimation(@NonNull CameraPosition currentCameraPosition) {
-    CameraCompassBearingAnimator animator =
-      (CameraCompassBearingAnimator) animatorArray.get(ANIMATOR_CAMERA_COMPASS_BEARING);
+    MapboxFloatAnimator animator =
+      (MapboxFloatAnimator) animatorArray.get(ANIMATOR_CAMERA_COMPASS_BEARING);
     if (animator == null) {
       return;
     }
@@ -343,7 +340,7 @@ final class LocationAnimatorCoordinator {
     float previousCameraBearing = (float) currentCameraPosition.bearing;
     float normalizedCameraBearing = Utils.shortestRotation(currentTargetBearing, previousCameraBearing);
     createNewAnimator(ANIMATOR_CAMERA_COMPASS_BEARING,
-      new CameraCompassBearingAnimator(previousCameraBearing, normalizedCameraBearing, cameraListeners));
+      new MapboxFloatAnimator(previousCameraBearing, normalizedCameraBearing, listeners[ANIMATOR_CAMERA_COMPASS_BEARING]));
   }
 
   private void createNewAnimator(@MapboxAnimator.Type int animatorType, MapboxAnimator animator) {
