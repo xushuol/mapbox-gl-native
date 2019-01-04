@@ -12,8 +12,9 @@ class MapboxCameraAnimatorAdapter extends MapboxFloatAnimator {
 
   MapboxCameraAnimatorAdapter(Float previous, Float target,
                               AnimationsValueChangeListener updateListener,
-                              @Nullable MapboxMap.CancelableCallback cancelableCallback) {
-    super(previous, target, updateListener);
+                              @Nullable MapboxMap.CancelableCallback cancelableCallback,
+                              MapboxAnimatorOptions mapboxAnimatorOptions) {
+    super(previous, target, updateListener, mapboxAnimatorOptions);
     this.cancelableCallback = cancelableCallback;
     addListener(new MapboxAnimatorListener());
   }

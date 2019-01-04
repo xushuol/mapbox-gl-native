@@ -6,6 +6,10 @@ import android.animation.TypeEvaluator;
 import android.animation.ValueAnimator;
 import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+
+import com.mapbox.mapboxsdk.log.Logger;
+import com.mapbox.mapboxsdk.utils.MathUtils;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -41,19 +45,28 @@ abstract class MapboxAnimator<K> extends ValueAnimator implements ValueAnimator.
   static final int ANIMATOR_ZOOM = 7;
   static final int ANIMATOR_TILT = 8;
 
+  private final MapboxAnimatorOptions mapboxAnimatorOptions;
   private final AnimationsValueChangeListener<K> updateListener;
   private final K target;
   private K animatedValue;
 
+  private final int minTime;
   private long timeElapsed;
 
-  MapboxAnimator(@NonNull K previous, @NonNull K target, @NonNull AnimationsValueChangeListener<K> updateListener) {
+  MapboxAnimator(@NonNull K previous, @NonNull K target, @NonNull AnimationsValueChangeListener<K> updateListener,
+                 @Nullable MapboxAnimatorOptions mapboxAnimatorOptions) {
+    this.mapboxAnimatorOptions = mapboxAnimatorOptions;
     setObjectValues(previous, target);
     setEvaluator(provideEvaluator());
     this.updateListener = updateListener;
     this.target = target;
     addUpdateListener(this);
     addListener(new AnimatorListener());
+    minTime =
+//      (int) (MathUtils.clamp(mapboxAnimatorOptions.getMapZoomLevel(), 14, 17) * (-60) + 960);
+          (int) (Math.pow(MathUtils.clamp(mapboxAnimatorOptions.getMapZoomLevel(), 14, 20) - 608/24, 2) - 256/9);
+    //      (int) (Math.pow(MathUtils.clamp(mapboxAnimatorOptions.getMapZoomLevel(), 14, 17) - 32, 2) - 225);
+    Logger.d("TESTTEST", String.valueOf(minTime));
   }
 
   @Override
@@ -61,12 +74,14 @@ abstract class MapboxAnimator<K> extends ValueAnimator implements ValueAnimator.
     animatedValue = (K) animation.getAnimatedValue();
 
     long currentTime = System.nanoTime();
-    if ((currentTime - timeElapsed) / 1E6 > 66) {
+    if ((currentTime - timeElapsed) / 1E6 > minTime) {
       postUpdates();
       timeElapsed = currentTime;
     }
   }
 
+  /* 15 - 0,4164266466330558*/
+  /* 14 - 0.8330651450129825*/
   private class AnimatorListener extends AnimatorListenerAdapter {
     @Override
     public void onAnimationEnd(Animator animation) {

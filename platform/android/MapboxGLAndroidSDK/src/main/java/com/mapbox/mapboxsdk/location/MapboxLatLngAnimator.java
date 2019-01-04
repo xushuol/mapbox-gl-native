@@ -7,8 +7,9 @@ import com.mapbox.mapboxsdk.geometry.LatLng;
 
 class MapboxLatLngAnimator extends MapboxAnimator<LatLng> {
 
-  MapboxLatLngAnimator(LatLng previous, LatLng target, AnimationsValueChangeListener updateListener) {
-    super(previous, target, updateListener);
+  MapboxLatLngAnimator(LatLng previous, LatLng target, AnimationsValueChangeListener updateListener,
+                       MapboxAnimatorOptions mapboxAnimatorOptions) {
+    super(previous, target, updateListener, mapboxAnimatorOptions);
   }
 
   @NonNull

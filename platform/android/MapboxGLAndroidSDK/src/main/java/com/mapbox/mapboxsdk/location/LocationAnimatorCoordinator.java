@@ -36,7 +36,7 @@ final class LocationAnimatorCoordinator {
 
   final SparseArray<MapboxAnimator> animatorArray = new SparseArray<>();
 
-  private final Projection projection;
+  private final MapboxMap mapboxMap;
   private Location previousLocation;
   private float previousAccuracyRadius = -1;
   private float previousCompassBearing = -1;
@@ -48,8 +48,8 @@ final class LocationAnimatorCoordinator {
 
   private MapboxAnimator.AnimationsValueChangeListener[] listeners;
 
-  LocationAnimatorCoordinator(@NonNull Projection projection, @NonNull MapboxAnimatorSetProvider animatorSetProvider) {
-    this.projection = projection;
+  LocationAnimatorCoordinator(@NonNull MapboxMap mapboxMap, @NonNull MapboxAnimatorSetProvider animatorSetProvider) {
+    this.mapboxMap = mapboxMap;
     this.animatorSetProvider = animatorSetProvider;
   }
 
@@ -87,8 +87,8 @@ final class LocationAnimatorCoordinator {
     updateLayerAnimators(previousLayerLatLng, targetLatLng, previousLayerBearing, targetLayerBearing);
     updateCameraAnimators(previousCameraLatLng, previousCameraBearing, targetLatLng, targetCameraBearing);
 
-    boolean snap = immediateAnimation(projection, previousCameraLatLng, targetLatLng)
-      || immediateAnimation(projection, previousLayerLatLng, targetLatLng);
+    boolean snap = immediateAnimation(mapboxMap.getProjection(), previousCameraLatLng, targetLatLng)
+      || immediateAnimation(mapboxMap.getProjection(), previousLayerLatLng, targetLatLng);
     playAnimators(
       snap ? 0 : getAnimationDuration(),
       ANIMATOR_LAYER_LATLNG,
@@ -230,7 +230,7 @@ final class LocationAnimatorCoordinator {
     cancelAnimator(animatorType);
     MapboxAnimator.AnimationsValueChangeListener listener = listeners[animatorType];
     if (listener != null) {
-      animatorArray.put(animatorType, new MapboxLatLngAnimator(previous, target, listener));
+      animatorArray.put(animatorType, new MapboxLatLngAnimator(previous, target, listener, new MapboxAnimatorOptions(mapboxMap.getCameraPosition().zoom)));
     }
   }
 
@@ -238,7 +238,7 @@ final class LocationAnimatorCoordinator {
     cancelAnimator(animatorType);
     MapboxAnimator.AnimationsValueChangeListener listener = listeners[animatorType];
     if (listener != null) {
-      animatorArray.put(animatorType, new MapboxFloatAnimator(previous, target, listener));
+      animatorArray.put(animatorType, new MapboxFloatAnimator(previous, target, listener, new MapboxAnimatorOptions(mapboxMap.getCameraPosition().zoom)));
     }
   }
 
@@ -247,7 +247,7 @@ final class LocationAnimatorCoordinator {
     cancelAnimator(animatorType);
     MapboxAnimator.AnimationsValueChangeListener listener = listeners[animatorType];
     if (listener != null) {
-      animatorArray.put(animatorType, new MapboxCameraAnimatorAdapter(previous, target, listener, cancelableCallback));
+      animatorArray.put(animatorType, new MapboxCameraAnimatorAdapter(previous, target, listener, cancelableCallback, new MapboxAnimatorOptions(mapboxMap.getCameraPosition().zoom)));
     }
   }
 
@@ -310,7 +310,7 @@ final class LocationAnimatorCoordinator {
     LatLng previousCameraTarget = currentCameraPosition.target;
     createNewLatLngAnimator(ANIMATOR_CAMERA_LATLNG, previousCameraTarget, currentTarget);
 
-    return immediateAnimation(projection, previousCameraTarget, currentTarget);
+    return immediateAnimation(mapboxMap.getProjection(), previousCameraTarget, currentTarget);
   }
 
   private void resetCameraGpsBearingAnimation(@NonNull CameraPosition currentCameraPosition, boolean isGpsNorth) {

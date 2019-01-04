@@ -5,8 +5,9 @@ import android.animation.TypeEvaluator;
 import android.support.annotation.NonNull;
 
 class MapboxFloatAnimator extends MapboxAnimator<Float> {
-  MapboxFloatAnimator(Float previous, Float target, AnimationsValueChangeListener updateListener) {
-    super(previous, target, updateListener);
+  MapboxFloatAnimator(Float previous, Float target, AnimationsValueChangeListener updateListener,
+                      MapboxAnimatorOptions mapboxAnimatorOptions) {
+    super(previous, target, updateListener, mapboxAnimatorOptions);
   }
 
   @NonNull

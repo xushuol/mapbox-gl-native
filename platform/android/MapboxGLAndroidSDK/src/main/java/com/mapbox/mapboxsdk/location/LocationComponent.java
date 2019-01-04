@@ -996,7 +996,7 @@ public final class LocationComponent {
       context, mapboxMap, cameraTrackingChangedListener, options, onCameraMoveInvalidateListener);
 
     locationAnimatorCoordinator = new LocationAnimatorCoordinator(
-      mapboxMap.getProjection(),
+      mapboxMap,
       MapboxAnimatorSetProvider.getInstance()
     );
     locationAnimatorCoordinator.setTrackingAnimationDurationMultiplier(options
@@ -1023,7 +1023,7 @@ public final class LocationComponent {
     if (this.locationEngine != null) {
       this.locationEngine.removeLocationUpdates(currentLocationEngineListener);
     }
-    locationEngine = internalLocationEngineProvider.getBestLocationEngine(context, false);
+    setLocationEngine(internalLocationEngineProvider.getBestLocationEngine(context, false));
   }
 
   private void updateCompassListenerState(boolean canListen) {
