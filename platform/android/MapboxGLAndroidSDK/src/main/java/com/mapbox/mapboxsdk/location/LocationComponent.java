@@ -213,7 +213,7 @@ public final class LocationComponent {
    * <strong>Note</strong>: This method will initialize and use an internal {@link LocationEngine} when enabled.
    *
    * @param context the context
-   * @param style the proxy object for current map style. More info at {@link Style}
+   * @param style   the proxy object for current map style. More info at {@link Style}
    */
   @RequiresPermission(anyOf = {ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION})
   public void activateLocationComponent(@NonNull Context context, @NonNull Style style) {
@@ -226,7 +226,7 @@ public final class LocationComponent {
    * Afterwards, you can manage component's visibility by {@link #setLocationComponentEnabled(boolean)}.
    *
    * @param context                  the context
-   * @param style the proxy object for current map style. More info at {@link Style}
+   * @param style                    the proxy object for current map style. More info at {@link Style}
    * @param useDefaultLocationEngine true if you want to initialize and use the built-in location engine or false if
    *                                 there should be no location engine initialized
    */
@@ -245,7 +245,7 @@ public final class LocationComponent {
    * Afterwards, you can manage component's visibility by {@link #setLocationComponentEnabled(boolean)}.
    *
    * @param context                  the context
-   * @param style the proxy object for current map style. More info at {@link Style}
+   * @param style                    the proxy object for current map style. More info at {@link Style}
    * @param useDefaultLocationEngine true if you want to initialize and use the built-in location engine or false if
    *                                 there should be no location engine initialized
    * @param locationEngineRequest    the location request
@@ -269,7 +269,7 @@ public final class LocationComponent {
    * <strong>Note</strong>: This method will initialize and use an internal {@link LocationEngine} when enabled.
    *
    * @param context  the context
-   * @param style the proxy object for current map style. More info at {@link Style}
+   * @param style    the proxy object for current map style. More info at {@link Style}
    * @param styleRes the LocationComponent style res
    */
   @RequiresPermission(anyOf = {ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION})
@@ -285,7 +285,7 @@ public final class LocationComponent {
    * </p>
    *
    * @param context the context
-   * @param style the proxy object for current map style. More info at {@link Style}
+   * @param style   the proxy object for current map style. More info at {@link Style}
    * @param options the options
    */
   @RequiresPermission(anyOf = {ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION})
@@ -301,7 +301,7 @@ public final class LocationComponent {
    * Afterwards, you can manage component's visibility by {@link #setLocationComponentEnabled(boolean)}.
    *
    * @param context        the context
-   * @param style the proxy object for current map style. More info at {@link Style}
+   * @param style          the proxy object for current map style. More info at {@link Style}
    * @param locationEngine the engine, or null if you'd like to only force location updates
    * @param styleRes       the LocationComponent style res
    */
@@ -317,7 +317,7 @@ public final class LocationComponent {
    * Afterwards, you can manage component's visibility by {@link #setLocationComponentEnabled(boolean)}.
    *
    * @param context               the context
-   * @param style the proxy object for current map style. More info at {@link Style}
+   * @param style                 the proxy object for current map style. More info at {@link Style}
    * @param locationEngine        the engine, or null if you'd like to only force location updates
    * @param locationEngineRequest the location request
    * @param styleRes              the LocationComponent style res
@@ -334,7 +334,7 @@ public final class LocationComponent {
    * This method will show the location icon and enable the camera tracking the location.
    *
    * @param context        the context
-   * @param style the proxy object for current map style. More info at {@link Style}
+   * @param style          the proxy object for current map style. More info at {@link Style}
    * @param locationEngine the engine
    */
   @RequiresPermission(anyOf = {ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION})
@@ -347,7 +347,7 @@ public final class LocationComponent {
    * This method will show the location icon and enable the camera tracking the location.
    *
    * @param context               the context
-   * @param style the proxy object for current map style. More info at {@link Style}
+   * @param style                 the proxy object for current map style. More info at {@link Style}
    * @param locationEngine        the engine
    * @param locationEngineRequest the location request
    */
@@ -363,7 +363,7 @@ public final class LocationComponent {
    * Afterwards, you can manage component's visibility by {@link #setLocationComponentEnabled(boolean)}.
    *
    * @param locationEngine the engine, or null if you'd like to only force location updates
-   * @param style the proxy object for current map style. More info at {@link Style}
+   * @param style          the proxy object for current map style. More info at {@link Style}
    * @param options        the options
    */
   @RequiresPermission(anyOf = {ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION})
@@ -380,7 +380,7 @@ public final class LocationComponent {
    * Afterwards, you can manage component's visibility by {@link #setLocationComponentEnabled(boolean)}.
    *
    * @param context               the context
-   * @param style the proxy object for current map style. More info at {@link Style}
+   * @param style                 the proxy object for current map style. More info at {@link Style}
    * @param locationEngine        the engine, or null if you'd like to only force location updates
    * @param locationEngineRequest the location request
    * @param options               the options
@@ -991,18 +991,13 @@ public final class LocationComponent {
     LayerFeatureProvider featureProvider = new LayerFeatureProvider();
     LayerBitmapProvider bitmapProvider = new LayerBitmapProvider(context);
     locationLayerController = new LocationLayerController(mapboxMap, style, sourceProvider, featureProvider,
-      bitmapProvider, options);
+      bitmapProvider, options, renderModeChangedListener);
     locationCameraController = new LocationCameraController(
       context, mapboxMap, cameraTrackingChangedListener, options, onCameraMoveInvalidateListener);
 
-    Set<AnimatorListenerHolder> animationsValueChangeListeners = new HashSet<>();
-    animationsValueChangeListeners.addAll(locationLayerController.getAnimationListeners());
-    animationsValueChangeListeners.addAll(locationCameraController.getAnimationListeners());
-
     locationAnimatorCoordinator = new LocationAnimatorCoordinator(
       mapboxMap.getProjection(),
-      MapboxAnimatorSetProvider.getInstance(),
-      animationsValueChangeListeners
+      MapboxAnimatorSetProvider.getInstance()
     );
     locationAnimatorCoordinator.setTrackingAnimationDurationMultiplier(options
       .trackingAnimationDurationMultiplier());
@@ -1169,6 +1164,13 @@ public final class LocationComponent {
     locationAnimatorCoordinator.feedNewAccuracyRadius(Utils.calculateZoomLevelRadius(mapboxMap, location), noAnimation);
   }
 
+  private void updateAnimatorListenerHolders() {
+    Set<AnimatorListenerHolder> animationsValueChangeListeners = new HashSet<>();
+    animationsValueChangeListeners.addAll(locationLayerController.getAnimationListeners());
+    animationsValueChangeListeners.addAll(locationCameraController.getAnimationListeners());
+    locationAnimatorCoordinator.updateAnimatorListenerHolders(animationsValueChangeListeners);
+  }
+
   @NonNull
   private OnCameraMoveListener onCameraMoveListener = new OnCameraMoveListener() {
     @Override
@@ -1303,9 +1305,20 @@ public final class LocationComponent {
     public void onCameraTrackingChanged(int currentMode) {
       locationAnimatorCoordinator.cancelZoomAnimation();
       locationAnimatorCoordinator.cancelTiltAnimation();
+      updateAnimatorListenerHolders();
+      locationAnimatorCoordinator.resetAllCameraAnimations(mapboxMap.getCameraPosition(),
+        locationCameraController.getCameraMode() == CameraMode.TRACKING_GPS_NORTH);
       for (OnCameraTrackingChangedListener listener : onCameraTrackingChangedListeners) {
         listener.onCameraTrackingChanged(currentMode);
       }
+    }
+  };
+
+  @NonNull
+  private OnRenderModeChangedListener renderModeChangedListener = new OnRenderModeChangedListener() {
+    @Override
+    public void onRenderModeChanged(int currentMode) {
+      updateAnimatorListenerHolders();
     }
   };
 

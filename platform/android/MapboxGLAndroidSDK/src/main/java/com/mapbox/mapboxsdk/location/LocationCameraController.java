@@ -199,12 +199,7 @@ final class LocationCameraController {
     new MapboxAnimator.AnimationsValueChangeListener<LatLng>() {
       @Override
       public void onNewAnimationValue(LatLng value) {
-        if (cameraMode == CameraMode.TRACKING
-          || cameraMode == CameraMode.TRACKING_COMPASS
-          || cameraMode == CameraMode.TRACKING_GPS
-          || cameraMode == CameraMode.TRACKING_GPS_NORTH) {
-          setLatLng(value);
-        }
+        setLatLng(value);
       }
     };
 
@@ -213,11 +208,9 @@ final class LocationCameraController {
       @Override
       public void onNewAnimationValue(Float value) {
         boolean trackingNorth = cameraMode == CameraMode.TRACKING_GPS_NORTH
-          && mapboxMap.getCameraPosition().bearing != 0;
+          && mapboxMap.getCameraPosition().bearing == 0;
 
-        if (cameraMode == CameraMode.TRACKING_GPS
-          || cameraMode == CameraMode.NONE_GPS
-          || trackingNorth) {
+        if (!trackingNorth) {
           setBearing(value);
         }
       }
@@ -252,11 +245,20 @@ final class LocationCameraController {
 
   Set<AnimatorListenerHolder> getAnimationListeners() {
     Set<AnimatorListenerHolder> holders = new HashSet<>();
-    holders.add(new AnimatorListenerHolder(MapboxAnimator.ANIMATOR_CAMERA_LATLNG, latLngValueListener));
-    holders.add(new AnimatorListenerHolder(MapboxAnimator.ANIMATOR_CAMERA_GPS_BEARING, gpsBearingValueListener));
-    holders.add(new AnimatorListenerHolder(
-      MapboxAnimator.ANIMATOR_CAMERA_COMPASS_BEARING,
-      compassBearingValueListener));
+    if (isLocationTracking()) {
+      holders.add(new AnimatorListenerHolder(MapboxAnimator.ANIMATOR_CAMERA_LATLNG, latLngValueListener));
+    }
+
+    if (isLocationBearingTracking()) {
+      holders.add(new AnimatorListenerHolder(MapboxAnimator.ANIMATOR_CAMERA_GPS_BEARING, gpsBearingValueListener));
+    }
+
+    if (isConsumingCompass()) {
+      holders.add(new AnimatorListenerHolder(
+        MapboxAnimator.ANIMATOR_CAMERA_COMPASS_BEARING,
+        compassBearingValueListener));
+    }
+
     holders.add(new AnimatorListenerHolder(MapboxAnimator.ANIMATOR_ZOOM, zoomValueListener));
     holders.add(new AnimatorListenerHolder(MapboxAnimator.ANIMATOR_TILT, tiltValueListener));
     return holders;
@@ -299,7 +301,8 @@ final class LocationCameraController {
 
   private boolean isLocationBearingTracking() {
     return cameraMode == CameraMode.TRACKING_GPS
-      || cameraMode == CameraMode.TRACKING_GPS_NORTH;
+      || cameraMode == CameraMode.TRACKING_GPS_NORTH
+      || cameraMode == CameraMode.NONE_GPS;
   }
 
   private void notifyCameraTrackingChangeListener(boolean wasTracking) {

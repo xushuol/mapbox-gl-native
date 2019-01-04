@@ -68,6 +68,7 @@ final class LocationLayerController {
   private final LayerSourceProvider layerSourceProvider;
   private final LayerBitmapProvider bitmapProvider;
   private LocationComponentOptions options;
+  private final OnRenderModeChangedListener internalRenderModeChangedListener;
 
   private final List<String> layerMap = new ArrayList<>();
   private Feature locationFeature;
@@ -77,14 +78,15 @@ final class LocationLayerController {
 
   LocationLayerController(MapboxMap mapboxMap, Style style, LayerSourceProvider layerSourceProvider,
                           LayerFeatureProvider featureProvider, LayerBitmapProvider bitmapProvider,
-                          @NonNull LocationComponentOptions options) {
+                          @NonNull LocationComponentOptions options,
+                          @NonNull OnRenderModeChangedListener internalRenderModeChangedListener) {
     this.mapboxMap = mapboxMap;
     this.style = style;
     this.layerSourceProvider = layerSourceProvider;
     this.bitmapProvider = bitmapProvider;
     this.locationFeature = featureProvider.generateLocationFeature(locationFeature, options);
+    this.internalRenderModeChangedListener = internalRenderModeChangedListener;
     initializeComponents(style, options);
-    setRenderMode(RenderMode.NORMAL);
   }
 
   void initializeComponents(Style style, LocationComponentOptions options) {
@@ -117,6 +119,7 @@ final class LocationLayerController {
   }
 
   void setRenderMode(@RenderMode.Mode int renderMode) {
+    int previousMode = this.renderMode;
     this.renderMode = renderMode;
 
     if (!isHidden) {
@@ -151,6 +154,10 @@ final class LocationLayerController {
       }
 
       determineIconsSource(options);
+    }
+
+    if (previousMode != renderMode) {
+      internalRenderModeChangedListener.onRenderModeChanged(renderMode);
     }
   }
 
@@ -241,10 +248,8 @@ final class LocationLayerController {
   }
 
   private void updateAccuracyRadius(float accuracy) {
-    if (renderMode == RenderMode.COMPASS || renderMode == RenderMode.NORMAL) {
-      locationFeature.addNumberProperty(PROPERTY_ACCURACY_RADIUS, accuracy);
-      refreshSource();
-    }
+    locationFeature.addNumberProperty(PROPERTY_ACCURACY_RADIUS, accuracy);
+    refreshSource();
   }
 
   //
@@ -395,9 +400,7 @@ final class LocationLayerController {
     new MapboxAnimator.AnimationsValueChangeListener<Float>() {
       @Override
       public void onNewAnimationValue(Float value) {
-        if (renderMode == RenderMode.GPS) {
-          setBearingProperty(PROPERTY_GPS_BEARING, value);
-        }
+        setBearingProperty(PROPERTY_GPS_BEARING, value);
       }
     };
 
@@ -405,9 +408,7 @@ final class LocationLayerController {
     new MapboxAnimator.AnimationsValueChangeListener<Float>() {
       @Override
       public void onNewAnimationValue(Float value) {
-        if (renderMode == RenderMode.COMPASS) {
-          setBearingProperty(PROPERTY_COMPASS_BEARING, value);
-        }
+        setBearingProperty(PROPERTY_COMPASS_BEARING, value);
       }
     };
 
@@ -422,9 +423,17 @@ final class LocationLayerController {
   Set<AnimatorListenerHolder> getAnimationListeners() {
     Set<AnimatorListenerHolder> holders = new HashSet<>();
     holders.add(new AnimatorListenerHolder(MapboxAnimator.ANIMATOR_LAYER_LATLNG, latLngValueListener));
-    holders.add(new AnimatorListenerHolder(MapboxAnimator.ANIMATOR_LAYER_GPS_BEARING, gpsBearingValueListener));
-    holders.add(new AnimatorListenerHolder(MapboxAnimator.ANIMATOR_LAYER_COMPASS_BEARING, compassBearingValueListener));
-    holders.add(new AnimatorListenerHolder(MapboxAnimator.ANIMATOR_LAYER_ACCURACY, accuracyValueListener));
+
+    if (renderMode == RenderMode.GPS) {
+      holders.add(new AnimatorListenerHolder(MapboxAnimator.ANIMATOR_LAYER_GPS_BEARING, gpsBearingValueListener));
+    } else if (renderMode == RenderMode.COMPASS) {
+      holders.add(new AnimatorListenerHolder(MapboxAnimator.ANIMATOR_LAYER_COMPASS_BEARING, compassBearingValueListener));
+    }
+
+    if (renderMode == RenderMode.COMPASS || renderMode == RenderMode.NORMAL) {
+      holders.add(new AnimatorListenerHolder(MapboxAnimator.ANIMATOR_LAYER_ACCURACY, accuracyValueListener));
+    }
+
     return holders;
   }
 }
