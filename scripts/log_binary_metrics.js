@@ -38,7 +38,6 @@ const binaryMetricsPayload = binaries.map(binary => {
       'platform' : binary[0],
       'arch': binary[1],
       'size' : fs.statSync(binary[2]).size,
-      'commit': `${process.env['CIRCLE_SHA1']}`,
       'created_at': `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-${date.getUTCDate()}`
   })
 });
